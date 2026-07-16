@@ -1,0 +1,8 @@
+node_modules
+dist
+cookies.txt
+
+# Env
+.env
+.env.*
+!.env.sample
