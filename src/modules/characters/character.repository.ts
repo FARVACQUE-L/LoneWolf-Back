@@ -14,7 +14,7 @@ import type {
 	CharacterStatus,
 	ObjectType,
 } from "../../db/types";
-import type { CharacterSnapshot } from "../../domain/fight";
+import type { CharacterSnapshot } from "../../domain/combat";
 
 interface InsertCharacterData {
 	idUser: number;
@@ -500,4 +500,14 @@ export async function hasDiscipline(
 		[idCharacter, name],
 	);
 	return row !== null;
+}
+
+export async function findLatestSaveId(
+	idCharacter: number,
+): Promise<number | null> {
+	const row = await queryOne<{ id: number }>(
+		`SELECT id FROM saves WHERE id_character = ? ORDER BY id DESC LIMIT 1`,
+		[idCharacter],
+	);
+	return row?.id ?? null;
 }

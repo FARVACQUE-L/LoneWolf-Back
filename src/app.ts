@@ -8,6 +8,7 @@ import { errorHandler, notFoundHandler } from "./middlewares/error";
 import { authRouter } from "./modules/auth/auth.routes";
 import { charactersRouter } from "./modules/characters/character.routes";
 import { disciplinesRouter } from "./modules/disciplines/discipline.routes";
+import { fightsRouter } from "./modules/fights/fight.routes";
 import { objectsRouter } from "./modules/objects/objects.routes";
 
 export const app = express();
@@ -31,6 +32,8 @@ app.use("/auth", authRouter);
 app.use("/characters", charactersRouter);
 app.use("/disciplines", disciplinesRouter);
 app.use("/objects", objectsRouter);
+
+app.use(fightsRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -5,14 +5,14 @@ import {
 	toBool,
 	toCharacterSummary,
 } from "../../db/types";
-import { roll } from "../../domain/dice";
 import {
 	applyDamage,
 	assertAwaitingChoice,
 	assertCanAct,
 	assertValidSnapshot,
 	buildSnapshot,
-} from "../../domain/fight";
+} from "../../domain/combat";
+import { roll } from "../../domain/dice";
 import * as inventory from "../../domain/inventory";
 import { checkInventoryLimits, rollStartingStats } from "../../domain/rules";
 import {
@@ -165,6 +165,16 @@ async function snapshotBeforeFight(
 	});
 
 	await repo.insertSave(idCharacter, snapshot);
+}
+
+export async function checkpoint(
+	idCharacter: number,
+	idUser: number,
+): Promise<void> {
+	const vitals = await repo.findVitals(idCharacter, idUser);
+	if (!vitals) throw NotFound("Personnage introuvable.");
+	assertCanAct(vitals.status);
+	await snapshotBeforeFight(idCharacter, vitals);
 }
 
 export async function damageCharacter(
