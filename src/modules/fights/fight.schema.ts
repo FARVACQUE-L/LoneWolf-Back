@@ -13,10 +13,12 @@ export const startFightSchema = z.object({
 		.int()
 		.min(1)
 		.max(99),
+	enemyPsychicAttack: z.boolean().optional().default(false),
 });
 export type StartFightInput = z.infer<typeof startFightSchema>;
 
 export const nextRoundSchema = z.object({
 	disciplineBonus: z.number().int().min(0).max(10).optional(),
+	mindblastEnabled: z.boolean().optional().default(true),
 });
 export type NextRoundInput = z.infer<typeof nextRoundSchema>;

@@ -359,7 +359,10 @@ export async function setMastery(
 	const line = await repo.findLineById(lineId, idCharacter);
 	if (!line) throw NotFound("Cet objet n'est pas dans l'inventaire.");
 
-	const hasWeaponskill = await repo.hasDiscipline(idCharacter, "Maîtrise");
+	const hasWeaponskill = await repo.hasDiscipline(
+		idCharacter,
+		"Maîtrise des armes",
+	);
 	inventory.assertCanMaster(line.type, hasWeaponskill);
 
 	if (mastered) {

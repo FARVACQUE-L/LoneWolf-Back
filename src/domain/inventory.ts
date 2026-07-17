@@ -43,7 +43,7 @@ export function assertCanMaster(
 	}
 	if (!hasWeaponskill) {
 		throw Conflict(
-			"Le personnage ne possède pas la discipline Maîtrise des Armes.",
+			"Le personnage ne possède pas la discipline Maîtrise des armes.",
 		);
 	}
 }

@@ -1,5 +1,8 @@
 import { execute, queryOne, transaction, txExecute } from "../../db/pool";
 
+export const DISCIPLINE_MINDBLAST = "Puissance psychique";
+export const DISCIPLINE_MINDSHIELD = "Bouclier psychique";
+
 export interface CharacterFightRow {
 	id: number;
 	combatSkill: number;
@@ -51,6 +54,7 @@ export interface NewFight {
 	enemyCombatSkill: number;
 	enemyEndurance: number;
 	idSave: number | null;
+	enemyPsychic: boolean;
 }
 
 export async function createFight(
@@ -59,8 +63,8 @@ export async function createFight(
 ): Promise<number> {
 	const res = await execute(
 		`INSERT INTO fights
-       (id_character, id_save, enemy_name, enemy_combat_skill, enemy_endurance_max, enemy_endurance)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+       (id_character, id_save, enemy_name, enemy_combat_skill, enemy_endurance_max, enemy_endurance, enemy_psychic)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		[
 			idCharacter,
 			f.idSave,
@@ -68,6 +72,7 @@ export async function createFight(
 			f.enemyCombatSkill,
 			f.enemyEndurance,
 			f.enemyEndurance,
+			f.enemyPsychic ? 1 : 0,
 		],
 	);
 	return res.insertId;
@@ -85,9 +90,18 @@ export interface FightWithCharacter {
 	characterEndurance: number;
 	characterStatus: "ALIVE" | "DEFEATED" | "DEAD";
 	lastRoundNumber: number;
+	hasWeaponEquipped: number;
+	hasMindblast: number;
+	hasMindshield: number;
+	enemyPsychic: number;
 }
 
-export function findFightWithCharacter(idFight: number, idUser: number) {
+export function findFightWithCharacter(
+	idFight: number,
+	idUser: number,
+	mindblastName: string,
+	mindshieldName: string,
+) {
 	return queryOne<FightWithCharacter>(
 		`SELECT f.id                  AS fightId,
             f.status              AS fightStatus,
@@ -95,15 +109,25 @@ export function findFightWithCharacter(idFight: number, idUser: number) {
             f.enemy_combat_skill  AS enemyCombatSkill,
             f.enemy_endurance     AS enemyEndurance,
             f.enemy_endurance_max AS enemyEnduranceMax,
+            f.enemy_psychic       AS enemyPsychic,
             c.id                  AS idCharacter,
             c.endurance           AS characterEndurance,
             c.status              AS characterStatus,
             ${EFFECTIVE_SKILL}    AS effectiveSkill,
+            EXISTS(SELECT 1 FROM character_objects we
+                     JOIN objects o ON o.id = we.id_object
+                    WHERE we.id_character = c.id AND we.equipped = 1 AND o.type = 'WEAPON') AS hasWeaponEquipped,
+            EXISTS(SELECT 1 FROM character_disciplines cdmb
+                     JOIN disciplines dmb ON dmb.id = cdmb.id_discipline
+                    WHERE cdmb.id_character = c.id AND dmb.name = ?) AS hasMindblast,
+            EXISTS(SELECT 1 FROM character_disciplines cdms
+                     JOIN disciplines dms ON dms.id = cdms.id_discipline
+                    WHERE cdms.id_character = c.id AND dms.name = ?) AS hasMindshield,
             COALESCE((SELECT MAX(r.number) FROM rounds r WHERE r.id_fight = f.id), 0) AS lastRoundNumber
      FROM fights f
      JOIN characters c ON c.id = f.id_character
      WHERE f.id = ? AND c.id_user = ?`,
-		[idFight, idUser],
+		[mindblastName, mindshieldName, idFight, idUser],
 	);
 }
 

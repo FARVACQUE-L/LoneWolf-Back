@@ -1,5 +1,10 @@
 import { randomInt } from "node:crypto";
 import { applyDamage, assertCanAct } from "../../domain/combat";
+import {
+	adjustedCombatSkill,
+	playerRoundLoss,
+	type RoundModifiers,
+} from "../../domain/combat-rules";
 import { applyLoss, resolveRound } from "../../domain/fight";
 import { Conflict, NotFound } from "../../errors";
 import { findLatestSaveId } from "../characters/character.repository";
@@ -35,6 +40,7 @@ export async function startFight(
 		enemyCombatSkill: input.enemyCombatSkill,
 		enemyEndurance: input.enemyEndurance,
 		idSave,
+		enemyPsychic: input.enemyPsychicAttack,
 	});
 
 	return {
@@ -55,7 +61,12 @@ export async function nextRound(
 	idUser: number,
 	input: NextRoundInput,
 ) {
-	const f = await fightRepo.findFightWithCharacter(idFight, idUser);
+	const f = await fightRepo.findFightWithCharacter(
+		idFight,
+		idUser,
+		fightRepo.DISCIPLINE_MINDBLAST,
+		fightRepo.DISCIPLINE_MINDSHIELD,
+	);
 	if (!f) throw NotFound("Combat introuvable.");
 	if (f.fightStatus !== "IN_PROGRESS")
 		throw Conflict("Ce combat est déjà terminé.");
@@ -63,8 +74,17 @@ export async function nextRound(
 
 	const draw = randomInt(0, 10);
 
+	const mods: RoundModifiers = {
+		hasWeaponEquipped: Boolean(f.hasWeaponEquipped),
+		hasMindblast: Boolean(f.hasMindblast),
+		mindblastEnabled: input.mindblastEnabled ?? true,
+		hasMindshield: Boolean(f.hasMindshield),
+		enemyHasPsychicAttack: Boolean(f.enemyPsychic),
+	};
+
 	const effectiveSkill =
-		Number(f.effectiveSkill) + (input.disciplineBonus ?? 0);
+		adjustedCombatSkill(Number(f.effectiveSkill), mods) +
+		(input.disciplineBonus ?? 0);
 	const outcome = resolveRound({
 		characterCombatSkill: effectiveSkill,
 		enemyCombatSkill: f.enemyCombatSkill,
@@ -72,9 +92,13 @@ export async function nextRound(
 	});
 
 	const enemyEnduranceAfter = applyLoss(f.enemyEndurance, outcome.enemyLoss);
-	const playerDamage =
+
+	const baseLoss =
 		outcome.playerLoss === "K" ? f.characterEndurance : outcome.playerLoss;
-	const player = applyDamage(f.characterEndurance, playerDamage);
+	const totalPlayerLoss =
+		outcome.playerLoss === "K" ? baseLoss : playerRoundLoss(baseLoss, mods);
+	const player = applyDamage(f.characterEndurance, totalPlayerLoss);
+
 	const enemyLossApplied = f.enemyEndurance - enemyEnduranceAfter;
 	const playerLossApplied = f.characterEndurance - player.currentEndurance;
 
