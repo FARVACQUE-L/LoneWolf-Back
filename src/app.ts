@@ -10,6 +10,7 @@ import { charactersRouter } from "./modules/characters/character.routes";
 import { disciplinesRouter } from "./modules/disciplines/discipline.routes";
 import { fightsRouter } from "./modules/fights/fight.routes";
 import { objectsRouter } from "./modules/objects/objects.routes";
+import { randomRouter } from "./modules/random/random.routes";
 
 export const app = express();
 
@@ -34,6 +35,7 @@ app.use("/disciplines", disciplinesRouter);
 app.use("/objects", objectsRouter);
 
 app.use(fightsRouter);
+app.use(randomRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
