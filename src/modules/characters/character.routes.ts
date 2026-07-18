@@ -135,3 +135,15 @@ charactersRouter.patch("/:id/lines/:lineId/drop", async (req, res) => {
 	const character = await service.dropOneLine(id, getUserId(req), lineId);
 	res.status(200).json({ character });
 });
+
+charactersRouter.post("/:id/heal", async (req, res) => {
+	const { id } = idParamSchema.parse(req.params);
+	const result = await service.heal(id, getUserId(req));
+	res.status(200).json(result);
+});
+
+charactersRouter.post("/:id/meal", async (req, res) => {
+	const { id } = idParamSchema.parse(req.params);
+	const result = await service.skipMeal(id, getUserId(req));
+	res.status(200).json(result);
+});

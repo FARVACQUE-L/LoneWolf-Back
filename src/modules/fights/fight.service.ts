@@ -6,8 +6,12 @@ import {
 	type RoundModifiers,
 } from "../../domain/combat-rules";
 import { applyLoss, resolveRound } from "../../domain/fight";
+import { healingRestore } from "../../domain/inventory";
 import { Conflict, NotFound } from "../../errors";
-import { findLatestSaveId } from "../characters/character.repository";
+import {
+	findLatestSaveId,
+	findObjects,
+} from "../characters/character.repository";
 import { checkpoint } from "../characters/character.service";
 import * as fightRepo from "./fight.repository";
 import type { NextRoundInput, StartFightInput } from "./fight.schema";
@@ -122,6 +126,28 @@ export async function nextRound(
 		characterStatus: player.status,
 	});
 
+	let healingOptions: Array<{
+		lineId: number;
+		name: string;
+		quantity: number;
+		restore: number;
+	}> = [];
+
+	if (fightStatus === "WON") {
+		const lines = await findObjects(f.idCharacter);
+		healingOptions = lines
+			.filter(
+				(l) =>
+					l.type === "BACKPACK" && l.quantity > 0 && healingRestore(l.name) > 0,
+			)
+			.map((l) => ({
+				lineId: l.line_id,
+				name: l.name,
+				quantity: l.quantity,
+				restore: healingRestore(l.name),
+			}));
+	}
+
 	return {
 		round: {
 			number: roundNumber,
@@ -137,5 +163,6 @@ export async function nextRound(
 			choiceRequired: player.status === "DEFEATED",
 		},
 		fightStatus,
+		healingOptions,
 	};
 }

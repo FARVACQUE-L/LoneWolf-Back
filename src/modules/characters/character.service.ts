@@ -373,3 +373,40 @@ export async function setMastery(
 	}
 	return getOne(idCharacter, idUser);
 }
+
+export async function heal(idCharacter: number, idUser: number) {
+	const vitals = await repo.findVitals(idCharacter, idUser);
+	if (!vitals) throw NotFound("Personnage introuvable.");
+	inventory.assertAlive(vitals.status);
+
+	const { enduranceDelta, newEndurance } = inventory.applyHealing(
+		vitals.endurance,
+		vitals.enduranceMax,
+	);
+	if (enduranceDelta !== 0) {
+		await repo.updateEndurance(idCharacter, idUser, newEndurance);
+	}
+	const character = await getOne(idCharacter, idUser);
+	return { character, effect: { name: "Guérison", enduranceDelta } };
+}
+
+export async function skipMeal(idCharacter: number, idUser: number) {
+	const vitals = await repo.findVitals(idCharacter, idUser);
+	if (!vitals) throw NotFound("Personnage introuvable.");
+	inventory.assertAlive(vitals.status);
+
+	const { enduranceDelta, newEndurance, status } = inventory.applyMissedMeal(
+		vitals.endurance,
+	);
+	await repo.updateVitals(idCharacter, idUser, {
+		endurance: newEndurance,
+		status,
+	});
+
+	const character = await getOne(idCharacter, idUser);
+	return {
+		character,
+		effect: { name: "Repas manqué", enduranceDelta },
+		status,
+	};
+}
