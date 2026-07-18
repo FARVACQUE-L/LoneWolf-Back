@@ -1,3 +1,5 @@
+import { Conflict } from "../errors";
+
 export const RULES = {
 	DISCIPLINES_AT_START: 5,
 	MAX_WEAPONS: 2,
@@ -12,6 +14,11 @@ export interface StartingStats {
 	endurance: number;
 	enduranceMax: number;
 	gold: number;
+}
+
+export interface GoldResult {
+	gold: number;
+	applied: number;
 }
 
 export function rollStartingStats(roll: () => number): StartingStats {
@@ -34,4 +41,12 @@ export function checkInventoryLimits(
 		return `Maximum ${RULES.MAX_BACKPACK} objets dans le sac à dos (reçu ${backpack}).`;
 	}
 	return null;
+}
+
+export function applyGoldDelta(currentGold: number, delta: number): GoldResult {
+	if (currentGold + delta < 0) {
+		throw Conflict("Pas assez de pièces d'or.", "INSUFFICIENT_GOLD");
+	}
+	const gold = Math.min(RULES.MAX_GOLD, currentGold + delta);
+	return { gold, applied: gold - currentGold };
 }

@@ -14,7 +14,11 @@ import {
 } from "../../domain/combat";
 import { roll } from "../../domain/dice";
 import * as inventory from "../../domain/inventory";
-import { checkInventoryLimits, rollStartingStats } from "../../domain/rules";
+import {
+	applyGoldDelta,
+	checkInventoryLimits,
+	rollStartingStats,
+} from "../../domain/rules";
 import {
 	BadRequest,
 	Conflict,
@@ -409,4 +413,21 @@ export async function skipMeal(idCharacter: number, idUser: number) {
 		effect: { name: "Repas manqué", enduranceDelta },
 		status,
 	};
+}
+
+export async function updateGold(
+	idCharacter: number,
+	idUser: number,
+	delta: number,
+) {
+	const vitals = await repo.findVitals(idCharacter, idUser);
+	if (!vitals) throw NotFound("Personnage introuvable.");
+	inventory.assertAlive(vitals.status);
+
+	const { gold, applied } = applyGoldDelta(vitals.gold, delta);
+	if (applied !== 0) {
+		await repo.updateOwned(idCharacter, idUser, { gold });
+	}
+	const character = await getOne(idCharacter, idUser);
+	return { character, effect: { name: "Bourse", goldDelta: applied } };
 }

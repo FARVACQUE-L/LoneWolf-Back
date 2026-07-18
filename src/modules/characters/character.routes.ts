@@ -7,6 +7,7 @@ import {
 	customObjectSchema,
 	damageSchema,
 	equipSchema,
+	goldSchema,
 	idParamSchema,
 	lineParamSchema,
 	masterySchema,
@@ -145,5 +146,12 @@ charactersRouter.post("/:id/heal", async (req, res) => {
 charactersRouter.post("/:id/meal", async (req, res) => {
 	const { id } = idParamSchema.parse(req.params);
 	const result = await service.skipMeal(id, getUserId(req));
+	res.status(200).json(result);
+});
+
+charactersRouter.post("/:id/gold", async (req, res) => {
+	const { id } = idParamSchema.parse(req.params);
+	const { delta } = goldSchema.parse(req.body);
+	const result = await service.updateGold(id, getUserId(req), delta);
 	res.status(200).json(result);
 });

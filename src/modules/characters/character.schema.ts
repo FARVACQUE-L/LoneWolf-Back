@@ -59,6 +59,14 @@ export const customObjectSchema = z.object({
 
 export const masterySchema = z.object({ mastered: z.boolean() });
 
+export const goldSchema = z.object({
+	delta: z
+		.number({ error: "delta doit être un nombre." })
+		.int("delta doit être un entier.")
+		.min(-999)
+		.max(999),
+});
+
 export type CreateCharacterInput = z.infer<typeof createCharacterSchema>;
 export type DamageInput = z.infer<typeof damageSchema>;
 export type UpdateCharacterInput = z.infer<typeof updateCharacterSchema>;
