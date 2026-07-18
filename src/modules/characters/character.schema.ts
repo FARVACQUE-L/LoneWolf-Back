@@ -67,6 +67,10 @@ export const goldSchema = z.object({
 		.max(999),
 });
 
+export const psychicSchema = z.object({
+	amount: z.number().int().min(1).max(99),
+});
+
 export type CreateCharacterInput = z.infer<typeof createCharacterSchema>;
 export type DamageInput = z.infer<typeof damageSchema>;
 export type UpdateCharacterInput = z.infer<typeof updateCharacterSchema>;

@@ -11,6 +11,7 @@ import {
 	idParamSchema,
 	lineParamSchema,
 	masterySchema,
+	psychicSchema,
 	updateCharacterSchema,
 } from "./character.schema";
 import * as service from "./character.service";
@@ -153,5 +154,12 @@ charactersRouter.post("/:id/gold", async (req, res) => {
 	const { id } = idParamSchema.parse(req.params);
 	const { delta } = goldSchema.parse(req.body);
 	const result = await service.updateGold(id, getUserId(req), delta);
+	res.status(200).json(result);
+});
+
+charactersRouter.post("/:id/psychic", async (req, res) => {
+	const { id } = idParamSchema.parse(req.params);
+	const { amount } = psychicSchema.parse(req.body);
+	const result = await service.psychicAttack(id, getUserId(req), amount);
 	res.status(200).json(result);
 });

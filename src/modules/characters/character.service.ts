@@ -431,3 +431,32 @@ export async function updateGold(
 	const character = await getOne(idCharacter, idUser);
 	return { character, effect: { name: "Bourse", goldDelta: applied } };
 }
+
+export async function psychicAttack(
+	idCharacter: number,
+	idUser: number,
+	amount: number,
+) {
+	const vitals = await repo.findVitals(idCharacter, idUser);
+	if (!vitals) throw NotFound("Personnage introuvable.");
+	inventory.assertAlive(vitals.status);
+
+	const shielded = await repo.hasDiscipline(idCharacter, "Bouclier Psychique");
+
+	const { enduranceDelta, newEndurance, status, blocked } =
+		inventory.applyPsychicAttack(vitals.endurance, amount, shielded);
+
+	if (enduranceDelta !== 0) {
+		await repo.updateVitals(idCharacter, idUser, {
+			endurance: newEndurance,
+			status,
+		});
+	}
+
+	const character = await getOne(idCharacter, idUser);
+	return {
+		character,
+		effect: { name: "Attaque psychique", enduranceDelta, blocked },
+		status,
+	};
+}

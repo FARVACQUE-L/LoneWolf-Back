@@ -45,6 +45,33 @@ export function applyMissedMeal(endurance: number): MealResult {
 	};
 }
 
+export function applyPsychicAttack(
+	endurance: number,
+	amount: number,
+	shielded: boolean,
+): {
+	enduranceDelta: number;
+	newEndurance: number;
+	status: CharacterStatus;
+	blocked: boolean;
+} {
+	if (shielded) {
+		return {
+			enduranceDelta: 0,
+			newEndurance: endurance,
+			status: "ALIVE",
+			blocked: true,
+		};
+	}
+	const newEndurance = Math.max(0, endurance - amount);
+	return {
+		enduranceDelta: newEndurance - endurance,
+		newEndurance,
+		status: newEndurance === 0 ? "DEAD" : "ALIVE",
+		blocked: false,
+	};
+}
+
 export interface ConsumeResult {
 	enduranceDelta: number;
 	newEndurance: number;
